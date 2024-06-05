@@ -1,0 +1,29 @@
+{
+    "name": "ghjayce/draw-random",
+    "description": "Get random numbers that are not repeated.",
+    "keywords": ["random", "random-generation"],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "GHJayce",
+            "email": "jaycedeng@outlook.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ghjayce\\DrawRandom\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GhjayceTest\\DrawRandom\\": "tests/"
+        }
+    }
+}
