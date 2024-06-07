@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace Ghjayce\DrawRandom;
 
+use Ghjayce\DrawRandom\Exception\DrawRandomException;
 use Ghjayce\DrawRandom\Interface\EncoderInterface;
 use Ghjayce\DrawRandom\Processor\ArrayProcessor;
 
 class DrawRandom
 {
     public function __construct(protected ?EncoderInterface $processor = null)
+    {
+        $this->setDefaultProcessor();
+    }
+
+    protected function setDefaultProcessor(): void
     {
         if (!$this->processor) {
             $this->setProcessor(new ArrayProcessor());
@@ -38,12 +44,18 @@ class DrawRandom
         return $result;
     }
 
-    public function takeOne(array &$prizes):? array
+    public function takeOne(array $prizes, bool $isRandom = true):? array
     {
         if (!$prizes) {
             return null;
         }
-        $prize = $this->pop($prizes);
+        if ($isRandom && !isset($prizes[1])) {
+            $index = array_rand($prizes, 1);
+            if ($index !== 0) {
+                $prizes = $this->swap($prizes, $index, 0);
+            }
+        }
+        $prize = array_shift($prizes);
         $prize = $this->unpack($prize);
         $range = [];
         if (!isset($prize[1])) {
@@ -51,10 +63,14 @@ class DrawRandom
         } else {
             $min = (int) $prize[0];
             $max = (int) $prize[1];
-            $number = $this->pick($min, $max);
+            $number = $this->random($min, $max);
             $range = [$min, $max];
+            $slices = $this->slicing($min, $max, $number);
+            if ($slices) {
+                array_push($prizes, ...$slices);
+            }
         }
-        return compact('number', 'range');
+        return compact('number', 'range', 'prizes');
     }
 
     public function take(int $count, array $prizes): array
@@ -65,16 +81,8 @@ class DrawRandom
             if (!$prizes) {
                 break;
             }
-            $result = $this->takeOne($prizes);
-            ['number' => $number, 'range' => $range] = $result;
+            ['number' => $number, 'prizes' => $prizes] = $this->takeOne($prizes, false);
             $numbers[] = $number;
-            if ($range) {
-                [$min, $max] = $range;
-                $slices = $this->slicing($min, $max, $number);
-                if ($slices) {
-                    array_push($prizes, ...$slices);
-                }
-            }
         }
         return compact('prizes', 'numbers');
     }
@@ -112,13 +120,19 @@ class DrawRandom
         return $prizes;
     }
 
-    protected function pop(array &$prizes): mixed
-    {
-        return array_shift($prizes);
-    }
-
-    protected function pick(int $min, int $max): int
+    public function random(int $min, int $max): int
     {
         return mt_rand($min, $max);
+    }
+
+    public function swap(array $prizes, int $originPosition, int $targetPosition): array
+    {
+        if (!isset($prizes[$originPosition], $prizes[$targetPosition])) {
+            throw new DrawRandomException('Position does not exists.');
+        }
+        $temp = $prizes[$originPosition];
+        $prizes[$originPosition] = $prizes[$targetPosition];
+        $prizes[$targetPosition] = $temp;
+        return $prizes;
     }
 }

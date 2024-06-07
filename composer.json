@@ -23,7 +23,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "GhjayceTest\\DrawRandom\\": "tests/"
+            "GhjayceTest\\DrawRandom\\": "tests/",
+            "GhjayceExample\\DrawRandom\\": "example/"
         }
     }
 }
